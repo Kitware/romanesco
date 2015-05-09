@@ -54,6 +54,9 @@ class SimpleTask(Task):
     def run(self):
         """Increment the run counter."""
         super(SimpleTask, self).run()
+        # trigger the run on the inputs
+        for port in self.input_ports:
+            self.get_input_data(port)
         self.count += 1
 
 

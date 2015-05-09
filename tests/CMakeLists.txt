@@ -58,6 +58,7 @@ add_docstring_test(gaia.core.port)
 add_docstring_test(gaia.core.operators)
 add_docstring_test(gaia.esgf.search)
 add_docstring_test(gaia.pandas.geopandas_writer)
+add_docstring_test(gaia.core.romanesco)
 
 add_python_test(version)
 add_python_test(factory)

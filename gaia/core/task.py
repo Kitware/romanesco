@@ -170,8 +170,6 @@ class Task(GaiaObject):
         aren't.
         """
         self.dirty = False
-        for port in self.inputs:
-            self.get_input_data(port)
 
     def _reset(self, *args):
         """Set dirty state for the task."""
