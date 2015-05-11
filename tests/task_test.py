@@ -84,7 +84,6 @@ class TestCaseTask(TestCase):
         t = T()
         u = T()
         self.assertEqual(t.get_input_task(name='input'), None)
-        self.assertRaises(Exception, t.run)
         self.assertRaises(ValueError, t.get_output, 'not a port')
         self.assertRaises(
             ValueError,
