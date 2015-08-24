@@ -1,4 +1,3 @@
-import json
 import sys
 import ast
 import os
@@ -6,6 +5,9 @@ from romanesco.format import validators
 
 
 class RomanescoTypeConverter(object):
+
+    types = {}
+
     def __new__(cls, value, **kwargs):
 
         if cls.is_valid(value, **kwargs):
@@ -28,17 +30,15 @@ class RomanescoTypeConverter(object):
 # Define the Output converter
 Output = type("Output", (RomanescoTypeConverter,), {})
 
-romanesco_types = []
-
 module = sys.modules[__name__]
 
 for key, val in validators.items():
-    romanesco_types.append(key.title())
-
     if not hasattr(module, key.title()):
         setattr(module,
                 str(key.title()),
                 type(str(key.title()), (RomanescoTypeConverter, ), {}))
+
+        RomanescoTypeConverter.types[key.title()] = getattr(module, key.title())
 
 
 class AnalysisStaticParser(ast.NodeVisitor):
@@ -133,7 +133,7 @@ class AnalysisStaticParser(ast.NodeVisitor):
 
     def is_type(self, node):
         try:
-            return node.func.id in romanesco_types
+            return node.func.id in RomanescoTypeConverter.types.keys()
         except AttributeError:
             return False
 
