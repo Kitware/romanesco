@@ -1,5 +1,6 @@
 from classes import Table, Output
 
+
 def main(a, b):
     c = {'fields': a['fields'], 'rows': a['rows'] + b['rows']}
     return c
