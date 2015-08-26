@@ -1,7 +1,7 @@
 import sys
 import ast
 import os
-from romanesco.format import validators
+from romanesco.format import conv_graph
 
 
 class RomanescoTypeConverter(object):
@@ -29,16 +29,20 @@ class RomanescoTypeConverter(object):
 
 # Define the Output converter
 Output = type("Output", (RomanescoTypeConverter,), {})
+RomanescoTypeConverter.types["Output"] = Output
+
+# Define the Geo converter
+Geo = type("Geo", (RomanescoTypeConverter,), {})
+RomanescoTypeConverter.types["Geo"] = Geo
 
 module = sys.modules[__name__]
 
-for key, val in validators.items():
-    if not hasattr(module, key.title()):
-        setattr(module,
-                str(key.title()),
-                type(str(key.title()), (RomanescoTypeConverter, ), {}))
+for node in conv_graph.nodes():
+    if not hasattr(module, node.type.title()):
+        cls = str(node.type.title())
+        setattr(module, cls, type(cls, (RomanescoTypeConverter, ), {}))
 
-        RomanescoTypeConverter.types[key.title()] = getattr(module, key.title())
+        RomanescoTypeConverter.types[cls] = getattr(module, cls)
 
 
 class AnalysisStaticParser(ast.NodeVisitor):
