@@ -29,7 +29,7 @@ class RomanescoTypeConverter(object):
 
 # Define the Output converter
 Output = type("Output", (RomanescoTypeConverter,), {})
-RomanescoTypeConverter.types["Output"] = Output
+
 
 # Define the Geo converter
 Geo = type("Geo", (RomanescoTypeConverter,), {})
@@ -47,14 +47,21 @@ for node in conv_graph.nodes():
 
 class AnalysisStaticParser(ast.NodeVisitor):
 
-    def __init__(self, filepath, mode, name=None, *args, **kwargs):
+    def __init__(self, filepath_or_script, mode, name=None, *args, **kwargs):
         super(AnalysisStaticParser, self).__init__(*args, **kwargs)
 
-        if name is None:
-            name = os.path.splitext(os.path.basename(filepath))[0]
 
-        with open(filepath, "r") as fh:
-            script = fh.read()
+        try:
+            with open(filepath_or_script, "r") as fh:
+                script = fh.read()
+            if name is None:
+                name = os.path.splitext(
+                    os.path.basename(filepath_or_script))[0]
+
+        except IOError:
+            script = filepath_or_script
+            name = "<lambda>"
+
 
         self.tree = ast.parse(script)
 
@@ -112,9 +119,9 @@ class AnalysisStaticParser(ast.NodeVisitor):
             # keyword must have value
             ret[keyword.arg] = self.get_value(keyword.value)
 
-            # Should do static analysis here
-            # i.e., require 'format' to be a keyword arg
-            return (ret['name'], ret)
+        # Should do static analysis here
+        # i.e., require 'format' to be a keyword arg
+        return (ret['name'], ret)
 
     def parse_output(self, node):
         ret = {}

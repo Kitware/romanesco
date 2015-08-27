@@ -3,6 +3,11 @@ import romanesco
 from . import executor
 import geopandas
 import fiona
+from romanesco.format import conv_graph, Validator
+from classes import AnalysisStaticParser
+
+PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 def fetch_handler(spec, **kwargs):
     path = spec.get("path", None)
@@ -22,9 +27,32 @@ def push_handler(spec, **kwargs):
             driver=spec.get("format", None))
 
 
+def import_validators():
+    # Geopandas formats are the same strings as the fiona/GDAL drivers
+    task_path = os.path.join(PACKAGE_DIR,
+                             "converters",
+                             "geopandas_validator_task.py")
+
+    for driver in fiona.supported_drivers.keys():
+        analysis = AnalysisStaticParser(task_path, mode="gaia").parse()
+
+        analysis['inputs'][0]['format'] = driver
+        analysis['name'] = "validate_{}".format(driver)
+
+        analysis['write_script'] = True
+
+        in_type = "geo"
+
+        conv_graph.add_node(Validator(in_type, driver), {
+            "validator": analysis
+        })
+
+
 
 def load(params):
     romanesco.register_executor('gaia', executor.run)
+
+    import_validators()
 
     #converters_dir = os.path.join(params['plugin_dir'], 'converters')
     #romanesco.format.import_converters([
