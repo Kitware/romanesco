@@ -19,15 +19,14 @@ def fetch_handler(spec, **kwargs):
     return df
 
 
-def push_handler(spec, **kwargs):
+def push_handler(data, spec, **kwargs):
     path = spec.get("path", None)
-    if path is not None:
-        df = geopandas.GeoDataFrame.to_file(
-            os.path.join(__path__[0], path),
-            driver=spec.get("format", None))
+    format = spec.get("format", None)
+    if path is not None and path is not None:
+        data.to_file(path, driver=format)
 
 
-def import_validators():
+def load_geopandas_validators():
     # Geopandas formats are the same strings as the fiona/GDAL drivers
     task_path = os.path.join(PACKAGE_DIR,
                              "converters",
@@ -48,16 +47,29 @@ def import_validators():
         })
 
 
+def add_geopandas_converter(in_format, out_format):
+    script = 'output = Output(Geo(input, format="{}"),type="geo", format="{}")'
+    conv_graph.add_edge(
+        Validator("geo", in_format),
+        Validator("geo", out_format),
+        AnalysisStaticParser(script.format(in_format, out_format),
+                             mode="gaia",
+                             name="{}_to_{}".format(in_format, out_format))
+        .parse())
+
+def load_geopandas_converters():    
+    for in_driver in fiona.supported_drivers.keys():
+        for out_driver, mode in fiona.supported_drivers.items():
+            
+            if mode in ["rw", "raw"]:
+                add_geopandas_converter(in_driver, out_driver)        
+
 
 def load(params):
     romanesco.register_executor('gaia', executor.run)
 
-    import_validators()
-
-    #converters_dir = os.path.join(params['plugin_dir'], 'converters')
-    #romanesco.format.import_converters([
-    #    os.path.join(converters_dir, 'geopandas')
-    #])
+    load_geopandas_validators()
+    load_geopandas_converters()
 
     romanesco.io.register_fetch_handler('gaia', fetch_handler)
     romanesco.io.register_push_handler('gaia', push_handler)
