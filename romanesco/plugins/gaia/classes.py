@@ -60,7 +60,7 @@ class AnalysisStaticParser(ast.NodeVisitor):
 
         except IOError:
             script = filepath_or_script
-            name = "<lambda>"
+            name = "<lambda>" if name is None else name
 
 
         self.tree = ast.parse(script)
