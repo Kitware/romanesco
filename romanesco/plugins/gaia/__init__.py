@@ -4,7 +4,6 @@ from . import executor
 import geopandas
 import fiona
 from romanesco.format import conv_graph, Validator
-from classes import AnalysisStaticParser
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -28,17 +27,20 @@ def push_handler(data, spec, **kwargs):
 
 def load_geopandas_validators():
     # Geopandas formats are the same strings as the fiona/GDAL drivers
-    task_path = os.path.join(PACKAGE_DIR,
-                             "converters",
-                             "geopandas_validator_task.py")
+    script = """import geopandas
+output = isinstance(input, geopandas.GeoDataFrame)"""
 
     for driver in fiona.supported_drivers.keys():
-        analysis = AnalysisStaticParser(task_path, mode="gaia").parse()
-
-        analysis['inputs'][0]['format'] = driver
-        analysis['name'] = "validate_{}".format(driver)
-
-        analysis['write_script'] = True
+        analysis = {"inputs": [{"type": "geo",
+                                "format": driver,
+                                "name": "input"}],
+                    "outputs": [{"type": "boolean",
+                                 "format": "boolean",
+                                 "name": "output"}],
+                    "script": script,
+                    "mode": "gaia",
+                    "name": "validate_{}".format(driver),
+                    "write_script": True}
 
         in_type = "geo"
 
@@ -48,21 +50,24 @@ def load_geopandas_validators():
 
 
 def add_geopandas_converter(in_format, out_format):
-    script = 'output = Output(Geo(input, format="{}"),type="geo", format="{}")'
+    script = 'output = input'
     conv_graph.add_edge(
         Validator("geo", in_format),
         Validator("geo", out_format),
-        AnalysisStaticParser(script.format(in_format, out_format),
-                             mode="gaia",
-                             name="{}_to_{}".format(in_format, out_format))
-        .parse())
+        {"script": script.format(in_format, out_format),
+         "name": "{}_to_{}".format(in_format, out_format),
+         "inputs": [{"type": "geo", "format": in_format, "name": "input"}],
+         "outputs": [{"type": "geo", "format": out_format, "name": "output"}],
+         "mode": "gaia"
+        })
 
-def load_geopandas_converters():    
+
+def load_geopandas_converters():
     for in_driver in fiona.supported_drivers.keys():
         for out_driver, mode in fiona.supported_drivers.items():
-            
+
             if mode in ["rw", "raw"]:
-                add_geopandas_converter(in_driver, out_driver)        
+                add_geopandas_converter(in_driver, out_driver)
 
 
 def load(params):
