@@ -6,9 +6,11 @@ sudo: false
 addons:
   apt:
     packages:
+      - libgdal1-dev
       - python-virtualenv
       - gfortran
       - openjdk-7-jdk
+
 
 # environment variables
 env:
