@@ -1,33 +1,33 @@
 import os
 import romanesco
-import geopandas as gpd
 from romanesco.specs import Port, PortList
 from romanesco.plugins.gaia import PACKAGE_DIR as GAIA_DIR
+
+from pprint import pprint
 
 
 class GeopandasReader(object):
     __inputs__ = PortList([Port(name="path",
                                 type="string",
-                                format="text"),
+                                format="text",
+                                validate=False),
                           Port(name="driver",
                                type="string",
-                               format="text")])
-    __outputs__ = PortList([Port(name="dataframe",
+                               format="text",
+                               validate=False)])
+    __outputs__ = PortList([Port(name="output",
                                  type="geo",
                                  format="dataframe")])
 
     def __init__(self, *args, **kwargs):
-        self.inputs = []
-        self.outputs = []
-        for port in self.__inputs__:
-            self.inputs.append(dict(port.items() +
-                                    [("data", kwargs.get(port.name, None))]))
+        self.inputs = {}
 
-        self.outputs = kwargs.get("outputs", [])
+        for pos, port in enumerate(self.__inputs__):
+            self.inputs[port.name] = dict(port.items() + [("data", args[pos])])
 
     @property
     def script(self):
-        return """import geopandas as gpd\noutput = gdp.read_file(path, driver=driver)"""
+        return """import geopandas as gpd\noutput = gpd.read_file(path, driver=driver)"""
 
     def parse(self):
         return {
@@ -37,11 +37,20 @@ class GeopandasReader(object):
             "mode": "python"}
 
     def run(self):
-        return (self.parse(), self.inputs, self.outputs)
+        raw = romanesco.run(self.parse(), inputs=self.inputs)
+        ret = []
 
+        for pos, port in enumerate(self.__outputs__):
+            try:
+                ret.append(raw[port.name]['data'])
+            except KeyError:
+                # Error here?
+                pass
 
+        return ret[0] if len(ret) == 1 else tuple(ret)
 
 if __name__ == "__main__":
-    c = GeopandasReader(path=os.path.join(GAIA_DIR, "tests", "data", "points.shp"),
-                        format="ESRI Shapefile")
-    c.run()
+    c = GeopandasReader(os.path.join(GAIA_DIR, "tests", "data", "points.shp"),
+                        "ESRI Shapefile")
+
+    pprint(c.run())
