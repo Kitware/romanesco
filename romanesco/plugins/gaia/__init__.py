@@ -44,9 +44,7 @@ output = isinstance(input, geopandas.GeoDataFrame)"""
 
         in_type = "geo"
 
-        conv_graph.add_node(Validator(in_type, driver), {
-            "validator": analysis
-        })
+        conv_graph.add_node(Validator(in_type, driver), analysis)
 
 
 def add_geopandas_converter(in_format, out_format):
@@ -67,6 +65,9 @@ def load_geopandas_converters():
         add_geopandas_converter(in_driver, "dataframe")
 
         for out_driver, mode in fiona.supported_drivers.items():
+            # Add a converter from a 'dataframe' object to
+            # drivers we can write too.
+            add_geopandas_converter("dataframe", out_driver)
 
             if mode in ["rw", "raw"]:
                 add_geopandas_converter(in_driver, out_driver)
