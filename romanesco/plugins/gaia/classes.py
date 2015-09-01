@@ -3,8 +3,6 @@ import romanesco
 from romanesco.specs import Port, PortList
 from romanesco.plugins.gaia import PACKAGE_DIR as GAIA_DIR
 
-from pprint import pprint
-
 
 class Task(object):
     def __init__(self, *args, **kwargs):
@@ -57,8 +55,44 @@ class GeopandasReader(Task):
         return """import geopandas as gpd\noutput = gpd.read_file(path, driver=driver)"""
 
 
+class GeopandasWriter(Task):
+    __inputs__ = PortList([
+        Port(name="df",
+             type="geo",
+             format="dataframe",
+             validate=False),
+        Port(name="path",
+             type="string",
+             format="text",
+             validate=False),
+        Port(name="driver",
+             type="string",
+             format="text",
+             validate=False)])
+    __outputs__ = PortList([Port(name="output",
+                                 type="boolean",
+                                 format="boolean")])
+
+    @property
+    def script(self):
+        return """
+import geopandas as gpd
+try:
+   df.to_file(path, driver=driver)
+   output = True
+except Exception:
+   output = False
+"""
+
+
 if __name__ == "__main__":
-    c = GeopandasReader(os.path.join(GAIA_DIR, "tests", "data", "points.shp"),
+    r = GeopandasReader(os.path.join(GAIA_DIR, "tests", "data", "points.shp"),
                         "ESRI Shapefile")
 
-    pprint(c.run())
+    df = r.run()
+
+    w = GeopandasWriter(df,
+                        "/tmp/tmp/points.shp",
+                        "ESRI Shapefile")
+
+    w.run()
