@@ -58,8 +58,7 @@ def add_geopandas_converter(in_format, out_format):
          "name": "{}_to_{}".format(in_format, out_format),
          "inputs": [{"type": "geo", "format": in_format, "name": "input"}],
          "outputs": [{"type": "geo", "format": out_format, "name": "output"}],
-         "mode": "gaia"
-        })
+         "mode": "gaia"})
 
 
 def load_geopandas_converters():

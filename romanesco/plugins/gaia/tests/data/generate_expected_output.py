@@ -14,7 +14,7 @@ if __name__ == "__main__":
         df = gpd.read_file(os.path.join(BASE_DIR, f))
 
         for driver, mode in fiona.supported_drivers.items():
-            print( "Starting {}..".format(driver), end='')
+            print("Starting {}..".format(driver), end='')
 
             # BNA driver for some reason causes a segfault
             if mode in ["rw", "raw"] and driver != "BNA":
@@ -33,7 +33,8 @@ if __name__ == "__main__":
                             os.remove(os.path.join(path, "output"))
                         # Error,  output was probably a directory not a file
                         except OSError:
-                            shutil.rmtree(os.path.join(path, "output"), ignore_errors=True)
+                            shutil.rmtree(os.path.join(path, "output"),
+                                          ignore_errors=True)
 
                     # Convert and save the output
                     df.to_file(os.path.join(path, "output"), driver=driver)

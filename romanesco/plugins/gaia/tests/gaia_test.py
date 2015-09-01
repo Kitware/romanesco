@@ -5,6 +5,7 @@ from romanesco.utils import tmpdir
 import unittest
 import hashlib
 
+
 class TestGaia(unittest.TestCase):
     def setUp(self):
         self.data_dir = os.path.join(PACKAGE_DIR, "tests", "data")
@@ -51,7 +52,6 @@ class TestGaia(unittest.TestCase):
             self.assertShapefileEquals(
                 os.path.join(self.data_dir, "points"),
                 os.path.join(tmp_dir, "points"))
-
 
     def test_shape_to_geojson(self):
         # import pudb; pu.db
