@@ -30,7 +30,7 @@ def load_geopandas_validators():
     script = """import geopandas
 output = isinstance(input, geopandas.GeoDataFrame)"""
 
-    for driver in fiona.supported_drivers.keys():
+    for driver in fiona.supported_drivers.keys() + ['dataframe']:
         analysis = {"inputs": [{"type": "geo",
                                 "format": driver,
                                 "name": "input"}],
@@ -63,6 +63,9 @@ def add_geopandas_converter(in_format, out_format):
 
 def load_geopandas_converters():
     for in_driver in fiona.supported_drivers.keys():
+        # Add a converter to a 'dataframe' object
+        add_geopandas_converter(in_driver, "dataframe")
+
         for out_driver, mode in fiona.supported_drivers.items():
 
             if mode in ["rw", "raw"]:
