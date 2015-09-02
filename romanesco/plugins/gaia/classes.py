@@ -5,6 +5,9 @@ from romanesco.plugins.gaia import PACKAGE_DIR as GAIA_DIR
 
 
 class Task(object):
+    __inputs__ = PortList()
+    __outputs__ = PortList()
+
     def __init__(self, *args, **kwargs):
         self.inputs = {}
         self.mode = kwargs.get("mode", "python")
