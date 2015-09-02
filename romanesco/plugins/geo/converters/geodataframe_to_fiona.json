@@ -1,0 +1,7 @@
+{
+    "name": "GeoDataFrame to Fiona",
+    "inputs": [{"name": "input", "type": "geo", "format": "geodataframe"}],
+    "outputs": [{"name": "output", "type": "geo", "format": "fiona"}],
+    "script_uri": "file://geodataframe_to_fiona.py",
+    "mode": "python"
+}

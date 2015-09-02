@@ -1,0 +1,6 @@
+{
+    "inputs": [{"type": "geo", "format": "geodataframe", "name": "input"}],
+    "outputs": [{"type": "boolean", "format": "boolean", "name": "output"}],
+    "script": "import geopandas\noutput = isinstance(input, geopandas.GeoDataFrame)",
+    "mode": "python"
+}

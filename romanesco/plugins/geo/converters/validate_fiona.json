@@ -1,0 +1,6 @@
+{
+    "inputs": [{"type": "geo", "format": "fiona", "name": "input"}],
+    "outputs": [{"type": "boolean", "format": "boolean", "name": "output"}],
+    "script": "output = isinstance(input, (str, unicode))",
+    "mode": "python"
+}
