@@ -1,7 +1,7 @@
 import girder_client
+import six
 import os
 import romanesco
-
 
 def _init_client(spec, require_token=False):
     if 'host' not in spec:
@@ -49,20 +49,37 @@ def fetch_handler(spec, **kwargs):
 
 def push_handler(data, spec, **kwargs):
     parent_type = spec.get('parent_type', 'folder')
-    name = spec.get('name', os.path.basename(data))
-    description = spec.get('description')
+
+    # Get the size of the BytesIO stream by seeking to the
+    # end,  calling tell() and then seeking to the begining
+    data = six.BytesIO(data)
+    data.seek(0, os.SEEK_END)
+    size = data.tell()
+    data.seek(0)
+
+    client = _init_client(spec, require_token=True)
 
     if 'parent_id' not in spec:
         raise Exception('Must pass parent ID for girder outputs.')
 
-    client = _init_client(spec, require_token=True)
-
     if parent_type == 'folder':
+        if 'name' not in spec:
+            raise Exception('Must pass an item name for girder '
+                            'folder outputs.')
+
         item = client.createItem(
-            spec['parent_id'], name, description=description)
-        client.uploadFileToItem(item['_id'], data)
+            spec['parent_id'], spec['name'],
+            description=spec.get('description'))
+
+        client.uploadFile(item['_id'], data,
+                          spec.get('file_name', spec['name']), size)
+
     elif parent_type == 'item':
-        client.uploadFileToItem(spec['parent_id'], data)
+        if 'file_name' not in spec and 'name' not in spec:
+            raise Exception('Must pass a file name for girder item outputs.')
+
+        client.uploadFile(spec['parent_id'], data,
+                          spec.get('file_name', spec['name']), size)
     else:
         raise Exception('Invalid parent type: ' + parent_type)
 
