@@ -3,6 +3,7 @@ import six
 import os
 import romanesco
 
+
 def _init_client(spec, require_token=False):
     if 'host' not in spec:
         raise Exception('Host key required for girder fetch mode')
@@ -79,7 +80,7 @@ def push_handler(data, spec, **kwargs):
             raise Exception('Must pass a file name for girder item outputs.')
 
         client.uploadFile(spec['parent_id'], data,
-                          spec.get('file_name', spec['name']), size)
+                          spec.get('file_name', spec.get('name')), size)
     else:
         raise Exception('Invalid parent type: ' + parent_type)
 

@@ -1,9 +1,8 @@
 import json
 import httmock
-import os
 import romanesco
-import shutil
 import unittest
+from copy import copy
 
 
 class TestGirderIo(unittest.TestCase):
@@ -12,7 +11,7 @@ class TestGirderIo(unittest.TestCase):
         self.task = {
             "inputs": [{"name": "input", "type": "string", "format": "text"}],
             "outputs": [{"name": "out", "type": "string", "format": "text"}],
-            "script": "out = input",
+            "script": "with open (input, 'rb') as fh:\n    out = fh.read()",
             "mode": "python"
         }
 
@@ -80,11 +79,9 @@ class TestGirderIo(unittest.TestCase):
         with httmock.HTTMock(girder_mock):
             outputs = romanesco.run(
                 self.task, inputs=inputs, outputs=None, cleanup=False)
-            path = outputs['out']['data']
-            self.assertTrue(os.path.isfile(path), path + ' does not exist')
-            with open(path) as f:
-                self.assertEqual(f.read(), 'file_contents')
-            shutil.rmtree(os.path.dirname(path))  # clean tmp dir
+            data = outputs['out']['data']
+
+            self.assertEquals(data, 'file_contents')
 
             # Now test pushing to girder
             del inputs['input']['data']
@@ -103,10 +100,37 @@ class TestGirderIo(unittest.TestCase):
                 }
             }
 
-            romanesco.run(self.task, inputs=inputs, outputs=outputs)
+            # uploading to parent_type == 'folder requires 'name' for an item
+            with self.assertRaises(Exception):
+                romanesco.run(self.task, inputs=inputs,
+                              outputs=outputs)
+
+            # Adding name should work
+            outputs['out']['name'] = 'test'
+            del inputs['input']['data']
+            romanesco.run(self.task, inputs=inputs,
+                          outputs=outputs)
+
             self.assertEqual(file_uploaded, [1])
             self.assertEqual(item_created, [1])
             self.assertEqual(upload_initialized, [1])
+
+            outputs['out']['parent_type'] = 'item'
+            del outputs['out']['name']
+            del inputs['input']['data']
+
+            # uploading to parent_type == 'item' requires either
+            # 'name' or 'file_name'
+            with self.assertRaises(Exception):
+                romanesco.run(self.task, inputs=copy(inputs), outputs=outputs)
+
+            # uploading file to item with 'file_name'  should work
+            outputs['out']['file_name'] = 'test'
+            del inputs['input']['data']
+            romanesco.run(self.task, inputs=copy(inputs), outputs=outputs)
+            self.assertEqual(file_uploaded, [1, 1])
+            self.assertEqual(item_created, [1])
+            self.assertEqual(upload_initialized, [1, 1])
 
 
 if __name__ == '__main__':
