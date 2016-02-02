@@ -16,7 +16,6 @@ class ReadOnlyAttributeException(Exception):
 
 
 class TaskSpec(Spec):
-
     """Defines a pipeline element.
 
     A task is an element of the pipeline responsible for completing an
@@ -123,7 +122,6 @@ class Task(MutableMapping):
         return self.__spec__.__len__()
 
     def update(self, other=None, **kw):
-
         """A recursive version of ``dict.update``."""
 
         if other is not None:
