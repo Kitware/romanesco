@@ -5,6 +5,7 @@ from girder.api.describe import Description
 
 class Validator(Resource):
     def __init__(self, celeryApp):
+        super(Validator, self).__init__()
         self.resourceName = 'romanesco_validator'
         self.route('GET', (), self.find)
         self.celeryApp = celeryApp
