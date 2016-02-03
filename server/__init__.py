@@ -10,7 +10,7 @@ from girder.constants import AccessType
 
 from girder import events
 from girder.api import access, rest
-from girder.api.describe import Description
+from girder.api.describe import Description, describeRoute
 from girder.models.model_base import AccessException, ValidationException
 from girder.utility.model_importer import ModelImporter
 from girder.plugins.jobs.constants import JobStatus
@@ -179,6 +179,12 @@ def runAnalysis(user, analysis, kwargs, item):
 
 def load(info):  # noqa
     @access.public
+    @describeRoute(
+        Description('Convert data from one format to another')
+        .param('inputType', 'The type of the input data')
+        .param('inputFormat', 'The format of the input data')
+        .param('outputFormat', 'The desired output format')
+    )
     def romanescoConvertData(inputType, inputFormat, outputFormat, params):
         content = cherrypy.request.body.read()
 
@@ -189,13 +195,15 @@ def load(info):  # noqa
         ])
 
         return asyncResult.get()
-    romanescoConvertData.description = (
-        Description('Convert data from one format to another')
-        .param('inputType', 'The type of the input data')
-        .param('inputFormat', 'The format of the input data')
-        .param('outputFormat', 'The desired output format'))
 
     @access.public
+    @describeRoute(
+        Description('Convert an item from one format to another')
+        .param('itemId', 'ID of the item to be converted')
+        .param('inputType', 'The type of the input data')
+        .param('inputFormat', 'The format of the input data')
+        .param('outputFormat', 'The desired output format')
+    )
     def romanescoConvert(itemId, inputType, inputFormat, outputFormat, params):
         itemApi = info['apiRoot'].item
 
@@ -208,12 +216,6 @@ def load(info):  # noqa
         ])
 
         return asyncResult.get()
-    romanescoConvert.description = (
-        Description('Convert an item from one format to another')
-        .param('itemId', 'ID of the item to be converted')
-        .param('inputType', 'The type of the input data')
-        .param('inputFormat', 'The format of the input data')
-        .param('outputFormat', 'The desired output format'))
 
     @access.public
     def getTaskId(jobId):
@@ -224,6 +226,11 @@ def load(info):  # noqa
         return job["taskId"]
 
     @access.public
+    @describeRoute(
+        Description('Show the status of a romanesco task')
+        .param('jobId', 'The job ID for this task.', paramType='path')
+        .param('itemId', 'Not used.', paramType='path')
+    )
     def romanescoRunStatus(itemId, jobId, params):
         taskId = getTaskId(jobId)
 
@@ -242,22 +249,24 @@ def load(info):  # noqa
                 'message': sys.exc_info(),
                 'trace': sys.exc_info()[2]
             }
-    romanescoRunStatus.description = (
-        Description('Show the status of a romanesco task')
-        .param('jobId', 'The job ID for this task.', paramType='path')
-        .param('itemId', 'Not used.', paramType='path'))
 
     @access.public
+    @describeRoute(
+        Description('Show the final output of a romanesco task.')
+        .param('jobId', 'The job ID for this task.', paramType='path')
+        .param('itemId', 'Not used.', paramType='path')
+    )
     def romanescoRunResult(itemId, jobId, params):
         taskId = getTaskId(jobId)
         job = AsyncResult(taskId, backend=getCeleryApp().backend)
         return {'result': job.result}
-    romanescoRunResult.description = (
-        Description('Show the final output of a romanesco task.')
-        .param('jobId', 'The job ID for this task.', paramType='path')
-        .param('itemId', 'Not used.', paramType='path'))
 
     @access.public
+    @describeRoute(
+        Description('Show the output for a romanesco task.')
+        .param('jobId', 'The job ID for this task.', paramType='path')
+        .param('itemId', 'Not used.', paramType='path')
+    )
     def romanescoRunOutput(itemId, jobId, params):
         jobApi = info['apiRoot'].job
         taskId = getTaskId(jobId)
@@ -310,15 +319,18 @@ def load(info):  # noqa
             yield 'event: past-end\ndata: null\n\n'
 
         return streamGen
-    romanescoRunOutput.description = (
-        Description('Show the output for a romanesco task.')
-        .param('jobId', 'The job ID for this task.', paramType='path')
-        .param('itemId', 'Not used.', paramType='path'))
 
     @access.public
     @rest.boundHandler(info['apiRoot'].item)
     @rest.loadmodel(map={'itemId': 'item'}, model='item',
                     level=AccessType.READ)
+    @describeRoute(
+        Description('Run a task specified by item metadata.')
+        .param('itemId', 'The item containing the analysis as metadata.',
+               paramType='path')
+        .param('kwargs', 'Additional kwargs for the worker task.',
+               paramType='body')
+    )
     def romanescoRun(self, item, params):
         # Make sure that we have permission to perform this analysis.
         user = self.getCurrentUser()
@@ -351,21 +363,16 @@ def load(info):  # noqa
                 'You must pass a valid JSON object in the request body.')
 
         return runAnalysis(user, analysis, kwargs, item)
-    romanescoRun.description = (
-        Description('Run a task specified by item metadata.')
-        .param('itemId', 'The item containing the analysis as metadata.',
-               paramType='path')
-        .param('kwargs', 'Additional kwargs for the worker task.',
-               paramType='body'))
 
     @access.public
+    @describeRoute(
+        Description('Stop execution of the specified job')
+        .param('jobId', 'The Job ID for this task')
+    )
     def romanescoStopRun(jobId, params):
         task = AsyncResult(jobId, backend=getCeleryApp().backend)
         task.revoke(getCeleryApp().broker_connection(), terminate=True)
         return {'status': task.state}
-    romanescoStopRun.description = (
-        Description('Stop execution of the specified job')
-        .param('jobId', 'The Job ID for this task'))
 
     info['apiRoot'].item.route(
         'POST',

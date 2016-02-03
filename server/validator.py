@@ -1,6 +1,6 @@
 from girder.api import access
 from girder.api.rest import Resource
-from girder.api.describe import Description
+from girder.api.describe import Description, describeRoute
 
 
 class Validator(Resource):
@@ -10,12 +10,12 @@ class Validator(Resource):
         self.celeryApp = celeryApp
 
     @access.public
-    def find(self, params):
-        return self.celeryApp.send_task('romanesco.validators', [
-            params.get('type', None),
-            params.get('format', None)]).get()
-    find.description = (
+    @describeRoute(
         Description('List or search for validators.')
         .param('type', 'Find validators with this type.', required=False)
         .param('format', 'Find validators with this format.', required=False)
     )
+    def find(self, params):
+        return self.celeryApp.send_task('romanesco.validators', [
+            params.get('type', None),
+            params.get('format', None)]).get()
