@@ -217,7 +217,6 @@ def load(info):  # noqa
 
         return asyncResult.get()
 
-    @access.public
     def getTaskId(jobId):
         # Get the celery task ID for this job.
         jobApi = info['apiRoot'].job
